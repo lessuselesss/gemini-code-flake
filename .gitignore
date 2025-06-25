@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python/
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.tox/
+dist/
+build/
+
+# Nix
+.direnv/
+.envrc
+result
+.nix-profile
+*.nixc
+
+# Editor/IDE specific
+.idea/
+.vscode/
+*.swp
+*.bak

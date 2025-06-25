@@ -58,11 +58,18 @@
       # Uv2nix can only work with what it has, and uv.lock is missing essential metadata to perform some builds.
       # This is an additional overlay implementing build fixups.
       # See:
-      # - https://pyproject-nix.github.io/uv2nix/FAQ.html
-      pyprojectOverrides = _final: _prev: {
+      # - https://pyproject-nix.github.io/pyproject.nix/build.html
+      pyprojectOverrides = final: prev: {
         # Implement build fixups here.
         # Note that uv2nix is _not_ using Nixpkgs buildPythonPackage.
         # It's using https://pyproject-nix.github.io/pyproject.nix/build.html
+
+        # Fix file collision between fastapi and fastapi-cli
+        fastapi-cli = prev.fastapi-cli.overrideAttrs (oldAttrs: {
+          postInstall = ''
+            rm $out/bin/fastapi
+          '';
+        });
       };
 
       # This example is only using x86_64-linux

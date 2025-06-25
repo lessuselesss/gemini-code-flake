@@ -37,7 +37,9 @@
 
       # Load a uv workspace from a workspace root.
       # Uv2nix treats all uv projects as workspace projects.
-      workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
+      workspace = uv2nix.lib.workspace.loadWorkspace {
+        workspaceRoot = ./.;
+      };
 
       # Create package overlay from workspace.
       overlay = workspace.mkPyprojectOverlay {
@@ -158,7 +160,7 @@
                         (old.src + "/pyproject.toml")
                         (old.src + "/README.md")
                         (old.src + "/scripts/server.py") # Changed from src/hello_world/__init__.py
-                        (old.src + "/uv.lock")
+                        # (old.src + "/uv.lock") # Seems to be making nix parse the uv.lock as a .toml, breaking the build process.
                       ];
                     };
 

@@ -35,6 +35,51 @@
     let
       inherit (nixpkgs) lib;
 
+      # Define the claude-code CLI package
+      claudeCode = pkgs.claude-code; # Assuming it's in nixpkgs
+
+      # Script to run both
+      runGeminiScript = pkgs.writeShellScript "run-gemini" ''
+        # Check for GEMINI_API_KEY
+        if [ -z "$GEMINI_API_KEY" ]; then
+          echo "Error: GEMINI_API_KEY environment variable is not set."
+          echo "Please set it before running: export GEMINI_API_KEY='your_key_here'"
+          exit 1
+        fi
+
+        # Check for CLAUDE.md
+        if [ ! -f "$PWD/CLAUDE.md" ]; then
+          echo "Warning: CLAUDE.md not found in the current directory ($PWD)."
+          echo "For optimal performance, please copy CLAUDE.md from the flake's source:"
+          echo "cp ${self}/CLAUDE.md $PWD/"
+          echo "Then re-run 'nix run <url>#gemini'"
+          exit 1
+        fi
+
+        # Define a log file path
+        LOG_FILE="/tmp/gemini-proxy.log" # Or a path in your project, e.g., "$PWD/proxy.log"
+
+        # Start the proxy service in the background, redirecting its output to a log file
+        export PORT=8888
+        export GEMINI_API_KEY="$GEMINI_API_KEY" # Pass through API key
+        export LOG_LEVEL="WARNING" # Keep this to minimize even the file logs
+        ${self.packages.x86_64-linux.proxy}/bin/uvicorn scripts.server:app --host 0.0.0.0 --port $PORT > "$LOG_FILE" 2>&1 & # Redirect stdout and stderr
+        PROXY_PID=$!
+        echo "Gemini proxy service started on port $PORT with PID $PROXY_PID. Logs redirected to $LOG_FILE"
+
+        # Wait for the proxy to be ready (optional, but good practice)
+        sleep 5 # Simple wait, could be more robust with health check
+
+        # Launch claude-code
+        export ANTHROPIC_BASE_URL="http://localhost:$PORT"
+        echo "Launching claude-code..."
+        ${claudeCode}/bin/claude "$@" # Pass through any arguments to claude
+
+        # Clean up proxy service on exit
+        echo "Stopping Gemini proxy service (PID $PROXY_PID)..."
+        kill $PROXY_PID
+      '';
+
       # Load a uv workspace from a workspace root.
       # Uv2nix treats all uv projects as workspace projects.
       workspace = uv2nix.lib.workspace.loadWorkspace {
@@ -91,19 +136,22 @@
               pyprojectOverrides
             ]
           );
-
     in
     {
-      # Package a virtual environment as our main application.
-      #
-      # Enable no optional dependencies for production build.
-      packages.x86_64-linux.default = pythonSet.mkVirtualEnv "gemini-code-flake-env" workspace.deps.default;
+      packages.x86_64-linux = {
+        proxy = pythonSet.mkVirtualEnv "gemini-code-flake-env" workspace.deps.default;
+        gemini = runGeminiScript; # New package for the combined app
+        default = self.packages.x86_64-linux.proxy;
+      };
 
-      # Make server runnable with `nix run`
       apps.x86_64-linux = {
-        default = {
+        proxy = {
           type = "app";
-          program = "${self.packages.x86_64-linux.default}/bin/server";
+          program = "${self.packages.x86_64-linux.proxy}/bin/server";
+        };
+        gemini = {
+          type = "app";
+          program = "${runGeminiScript}";
         };
       };
 

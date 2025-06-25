@@ -63,7 +63,7 @@ class Config:
         self.big_model = os.environ.get("BIG_MODEL", "gemini-1.5-pro-latest")
         self.small_model = os.environ.get("SMALL_MODEL", "gemini-1.5-flash-latest")
         self.host = os.environ.get("HOST", "0.0.0.0")
-        self.port = int(os.environ.get("PORT", "8082"))
+        self.port = int(os.environ.get("PORT", "8888"))
         self.log_level = os.environ.get("LOG_LEVEL", "WARNING")
         self.max_tokens_limit = int(os.environ.get("MAX_TOKENS_LIMIT", "8192"))
         

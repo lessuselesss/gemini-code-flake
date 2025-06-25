@@ -1,0 +1,26 @@
+[project]
+name = "gemini-code-flake"
+version = "0.1.0"
+description = "A proxy server to enable Claude Code with Google Gemini models."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115.11",
+    "uvicorn>=0.34.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "litellm>=1.40.14",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+server = "scripts.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6.7",
+]

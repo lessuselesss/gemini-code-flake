@@ -59,8 +59,10 @@
         # Define a log file path
         LOG_FILE="/tmp/gemini-proxy.log" # Or a path in your project, e.g., "$PWD/proxy.log"
 
+        # Find an available port and export it
+        export PORT=$(${python}/bin/python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
+
         # Start the proxy service in the background, redirecting its output to a log file
-        export PORT=8888
         export GEMINI_API_KEY="$GEMINI_API_KEY" # Pass through API key
         export LOG_LEVEL="WARNING" # Keep this to minimize even the file logs
         ${self.packages.x86_64-linux.proxy}/bin/uvicorn scripts.server:app --host 0.0.0.0 --port $PORT > "$LOG_FILE" 2>&1 & # Redirect stdout and stderr
